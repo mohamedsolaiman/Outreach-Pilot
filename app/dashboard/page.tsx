@@ -99,10 +99,8 @@ export default function DashboardPage() {
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md shadow-sm border-0">
+          <DialogTrigger render={<Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md shadow-sm border-0" />}>
               <Plus className="h-4 w-4 mr-2" /> New Campaign
-            </Button>
           </DialogTrigger>
           <DialogContent className="rounded-xl border border-slate-200 shadow-lg">
             <DialogHeader>
