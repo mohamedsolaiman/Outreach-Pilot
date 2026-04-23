@@ -1,0 +1,10 @@
+{
+  "projectId": "huggingface-video-editor",
+  "appId": "1:617939331440:web:2246bd1238acffb7a307b5",
+  "apiKey": "AIzaSyC2M1--kGMkgUGVJVMZCGhuKfapPXuSiXw",
+  "authDomain": "huggingface-video-editor.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-111dd19d-2086-484f-93de-8e0fc4b19433",
+  "storageBucket": "huggingface-video-editor.firebasestorage.app",
+  "messagingSenderId": "617939331440",
+  "measurementId": ""
+}

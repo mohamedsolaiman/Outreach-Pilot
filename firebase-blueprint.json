@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "A user profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt", "updatedAt"]
+    },
+    "campaign": {
+      "title": "Campaign",
+      "description": "An outreach campaign targeting a specific niche.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string" },
+        "title": { "type": "string" },
+        "niche": { "type": "string" },
+        "targetService": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "completed", "paused"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "title", "niche", "targetService", "status", "createdAt", "updatedAt"]
+    },
+    "lead": {
+      "title": "Lead",
+      "description": "A generated lead from a campaign.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string" },
+        "campaignId": { "type": "string" },
+        "name": { "type": "string" },
+        "website": { "type": "string" },
+        "email": { "type": "string" },
+        "socials": { "type": "string" },
+        "personalizedPitch": { "type": "string" },
+        "status": { "type": "string", "enum": ["new", "contacted", "rejected", "converted"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "campaignId", "name", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/user" },
+      "description": "User profiles"
+    },
+    "/campaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/campaign" },
+      "description": "User campaigns"
+    },
+    "/campaigns/{campaignId}/leads/{leadId}": {
+      "schema": { "$ref": "#/entities/lead" },
+      "description": "Leads belonging to a campaign"
+    }
+  }
+}

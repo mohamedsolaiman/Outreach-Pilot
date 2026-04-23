@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'displayName', 'createdAt', 'updatedAt']) 
+        && data.size() == 4
+        && data.email is string && data.email.size() <= 256
+        && data.displayName is string && data.displayName.size() <= 100
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    function isValidUserUpdate(data) {
+      return data.updatedAt == request.time;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUserUpdate(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']);
+    }
+
+    function isValidCampaign(data, uid) {
+      return data.keys().hasAll(['ownerId', 'title', 'niche', 'targetService', 'status', 'createdAt', 'updatedAt'])
+        && data.size() == 7
+        && data.ownerId == uid
+        && data.title is string && data.title.size() <= 100
+        && data.niche is string && data.niche.size() <= 200
+        && data.targetService is string && data.targetService.size() <= 200
+        && data.status is string && data.status in ['active', 'completed', 'paused']
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    match /campaigns/{campaignId} {
+      allow get: if isOwner(existing().ownerId);
+      allow list: if isOwner(resource.data.ownerId);
+      allow create: if isOwner(incoming().ownerId) && isValidId(campaignId) && isValidCampaign(incoming(), request.auth.uid);
+      allow update: if isOwner(existing().ownerId) 
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasAny(['title', 'niche', 'targetService', 'status', 'updatedAt'])
+        && !incoming().diff(existing()).affectedKeys().hasAny(['ownerId', 'createdAt']);
+      allow delete: if isOwner(existing().ownerId);
+
+      function isValidLead(data, uid, cid) {
+        return data.keys().hasAll(['ownerId', 'campaignId', 'name', 'status', 'createdAt', 'updatedAt'])
+          && data.size() >= 6 && data.size() <= 10
+          && data.ownerId == uid
+          && data.campaignId == cid
+          && data.name is string && data.name.size() <= 200
+          && data.status is string && data.status in ['new', 'contacted', 'rejected', 'converted']
+          && data.createdAt == request.time
+          && data.updatedAt == request.time
+          && (!('website' in data) || (data.website is string && data.website.size() <= 500))
+          && (!('email' in data) || (data.email is string && data.email.size() <= 200))
+          && (!('socials' in data) || (data.socials is string && data.socials.size() <= 500))
+          && (!('personalizedPitch' in data) || (data.personalizedPitch is string && data.personalizedPitch.size() <= 5000));
+      }
+
+      match /leads/{leadId} {
+        allow get: if isOwner(existing().ownerId);
+        allow list: if isOwner(resource.data.ownerId) && resource.data.campaignId == campaignId;
+        allow create: if isOwner(incoming().ownerId) 
+          && isValidId(leadId) 
+          && isValidLead(incoming(), request.auth.uid, campaignId)
+          && get(/databases/$(database)/documents/campaigns/$(campaignId)).data.ownerId == request.auth.uid;
+        allow update: if isOwner(existing().ownerId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().campaignId == existing().campaignId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && !incoming().diff(existing()).affectedKeys().hasAny(['ownerId', 'campaignId', 'createdAt']);
+        allow delete: if isOwner(existing().ownerId);
+      }
+    }
+  }
+}
